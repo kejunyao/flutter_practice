@@ -1,6 +1,11 @@
 # flutter_practice
 
-A new Flutter application.
+Project目录说明
+    /lib/dart: dart基础API的扩展，如LruCache；
+    /lib/storage: 与存储相关；
+    /lib/network: 与网络相关；
+    /lib/widget: 与UI组件相关；
+    /lib/isolate: 与isolate使用相关；
 
 ## Getting Started
 
