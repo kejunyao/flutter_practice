@@ -6,12 +6,13 @@ import 'package:flutter_practice/util/navigator_utils.dart';
 typedef OnItemSelectedCallback = Function(int index, Item item);
 
 /// 通用ListView界面
-abstract class BaseListView extends StatefulWidget {
+abstract class BaseListView extends StatelessWidget {
 
   final List<Item> items = [];
 
   final String title;
   BaseListView({Key key, this.title}) : super(key: key) {
+    this.items.clear();
     List<Item> _items = buildItems();
     if (_items?.isNotEmpty == true) {
       this.items.addAll(_items);
@@ -19,36 +20,20 @@ abstract class BaseListView extends StatefulWidget {
   }
 
   @override
-  State<StatefulWidget> createState() {
-    return _BaseListState();
-  }
-
-  List<Item> buildItems();
-}
-
-class _BaseListState extends State<BaseListView> {
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
       ),
       body: _body(),
     );
   }
 
   Widget _body() {
-    List<Item> items = widget.items;
     Divider divider = Divider(color: Colors.blue);
     return ListView.separated(
-        // scrollDirection: Axis.horizontal,
-        itemCount: widget.items.length,
+      // scrollDirection: Axis.horizontal,
+        itemCount: items.length,
         separatorBuilder:  (BuildContext context, int index) {
           return divider;
         },
@@ -68,4 +53,6 @@ class _BaseListState extends State<BaseListView> {
           );
         });
   }
+
+  List<Item> buildItems();
 }

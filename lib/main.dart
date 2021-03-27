@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_practice/widget/base_grid_view_screen.dart';
+import 'package:flutter_practice/example/base_grid_view_screen.dart';
 import 'package:flutter_practice/item.dart';
-import 'package:flutter_practice/widget/widget_list_screen.dart';
+import 'package:flutter_practice/widget/example/widget_list_screen.dart';
 
 void main() {
   runApp(MyApp());
