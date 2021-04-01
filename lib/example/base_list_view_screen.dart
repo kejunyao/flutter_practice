@@ -17,6 +17,8 @@ abstract class BaseListView extends StatelessWidget {
     if (_items?.isNotEmpty == true) {
       this.items.addAll(_items);
     }
+
+    // CompatibleTextEditingController
   }
 
   @override
@@ -42,7 +44,7 @@ abstract class BaseListView extends StatelessWidget {
             color: Colors.white,
             child: ListTile(
                 title: Text(items[index].name, style: TextStyle(fontSize: 20, color: Colors.blue)),
-                trailing: Icon(Icons.arrow_forward_ios)
+                trailing: Icon(Icons.arrow_forward_ios, color: Colors.blue)
             ),
           );
           return GestureDetector(

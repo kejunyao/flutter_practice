@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_practice/example/base_grid_view_screen.dart';
 import 'package:flutter_practice/item.dart';
-import 'package:flutter_practice/widget/example/widget_list_screen.dart';
+import 'package:flutter_practice/storage/db/flutter_lite.dart';
+import 'package:flutter_practice/widgets/example/widget_list_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -10,6 +11,8 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    /// DartLite lite = DartLite();
+    /// print('lite.runtimeType: ${lite.runtimeType}');
     return MaterialApp(
       title: 'Flutter学习实践',
       theme: ThemeData(

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_practice/example/base_list_view_screen.dart';
 import 'package:flutter_practice/item.dart';
-import 'package:flutter_practice/widget/dashed_line.dart';
-import 'package:flutter_practice/widget/star_rating.dart';
+import 'package:flutter_practice/widgets/dashed_line.dart';
+import 'package:flutter_practice/widgets/star_rating.dart';
+import 'compatible_text_editing.dart';
 
 /// 各种控件列表
 class WidgetListScreen extends BaseListView {
@@ -30,6 +31,7 @@ class WidgetListScreen extends BaseListView {
           )
         )
     );
+    items.add(Item.withScaffold('CompatibleTextEditingController', CompatibleTextEditing()));
     return items;
   }
 
