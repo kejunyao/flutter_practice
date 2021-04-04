@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 class Item {
   String name;
   Widget page;
-  Item(this.name, this.page);
+  Color color;
+  Item(this.name, this.page, {this.color = Colors.blue});
 
-  Item.withScaffold(String name, Widget widget) {
+  Item.withScaffold(String name, Widget widget, {Color color}) {
     this.name = name;
+    this.color = color ?? Colors.blue;
     this.page = Scaffold(
       appBar: AppBar(
         title: Text(name),
@@ -16,8 +18,9 @@ class Item {
     );
   }
 
-  Item.withScaffoldCenter(String name, Widget widget) {
+  Item.withScaffoldCenter(String name, Widget widget, {Color color}) {
     this.name = name;
+    this.color = color ?? Colors.blue;
     this.page = Scaffold(
       appBar: AppBar(
         title: Text(name),

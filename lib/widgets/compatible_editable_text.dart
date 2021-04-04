@@ -21,8 +21,12 @@ class CompatibleTextEditingController extends TextEditingController {
   String _validText = '';
 
   /// 获取有效的文本
-  String get  validText {
-    _flushValidText();
+  ///
+  /// 注意：需要在使用[CompatibleTextEditingController]的[StatefulWidget]或[StatelessWidget]的build(BuildContext)方法使用，才能获取正确的有效文本；
+  ///
+  /// 若在[TextField]的onChanged回调方法中调用，则获取的文本有问题，因为onChanged被调用时isComposingRangeValid == true。
+  String get validText {
+    _obtainValidText();
     return _validText ?? '';
   }
 
@@ -35,21 +39,17 @@ class CompatibleTextEditingController extends TextEditingController {
   @override
   set text(String newText) {
     super.text = newText;
-    _flushValidText();
-  }
-
-  void onChanged(String text) {
-    _flushValidText();
-    print('_onChange: isComposingRangeValid: ${value.isComposingRangeValid}, validText: $validText, text: ${value.text}');
+    _obtainValidText();
   }
 
   @override
   set value(TextEditingValue newValue) {
       super.value = newValue;
-      _flushValidText();
+      _obtainValidText();
   }
 
-  void _flushValidText() {
+  /// 抓取有效的文本
+  void _obtainValidText() {
     if (Platform.isIOS && value.isComposingRangeValid) {
     } else {
       _validText = value.text;

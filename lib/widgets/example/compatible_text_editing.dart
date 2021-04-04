@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import '../compatible_editable_text.dart';
-import '../compatible_text_field.dart';
 
 class CompatibleTextEditing extends StatefulWidget {
   @override

@@ -33,7 +33,7 @@ abstract class BaseGridView extends StatelessWidget {
         shrinkWrap: true,
         physics: ClampingScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3, mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.0),
+            crossAxisCount: 3, mainAxisSpacing: 10, crossAxisSpacing: 1, childAspectRatio: 1.0),
         itemCount: items.length,
         itemBuilder: (BuildContext context, int index) {
           return GestureDetector(

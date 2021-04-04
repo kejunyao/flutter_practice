@@ -40,16 +40,17 @@ abstract class BaseListView extends StatelessWidget {
           return divider;
         },
         itemBuilder: (BuildContext context, int index) {
+          Item item = items[index];
           Widget widget = Container(
             color: Colors.white,
             child: ListTile(
-                title: Text(items[index].name, style: TextStyle(fontSize: 20, color: Colors.blue)),
-                trailing: Icon(Icons.arrow_forward_ios, color: Colors.blue)
+                title: Text(item.name, style: TextStyle(fontSize: 20, color: item.color)),
+                trailing: Icon(Icons.arrow_forward_ios, color: item.color)
             ),
           );
           return GestureDetector(
             onTap: () {
-              NavigatorUtils.push(context, items[index].page);
+              NavigatorUtils.push(context, item.page);
             },
             child: widget,
           );
