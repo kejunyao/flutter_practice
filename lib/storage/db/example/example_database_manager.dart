@@ -1,8 +1,8 @@
+import 'package:flutter_practice/storage/db/base_lite.dart';
 import 'package:flutter_practice/storage/db/example/book.dart';
-import '../easy_lite.dart';
 
 /// 数据库接入示例
-class ExampleDatabaseManager extends EasyLite {
+class ExampleDatabaseManager extends BaseLite {
 
   final _databaseName = 'doudou.db';
   final _databaseVersion = 1;

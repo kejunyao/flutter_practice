@@ -8,7 +8,7 @@ abstract class BaseDao<T> implements Dao<T> {
   RootDatabase _database;
   final List<String> _columns = [];
   BaseDao() {
-    getColumns()?.forEach((e) {
+    columns?.forEach((e) {
       _columns.add(e.name);
     });
   }
@@ -17,9 +17,9 @@ abstract class BaseDao<T> implements Dao<T> {
     _database = database;
   }
 
-  String getTable();
+  String get table;
 
-  List<TableColumn> getColumns();
+  List<TableColumn> get columns;
 
   T toEntity(Map<String, dynamic> map);
 
@@ -29,29 +29,29 @@ abstract class BaseDao<T> implements Dao<T> {
   Future<List<dynamic>> batchInsert(List<T> entities,
       {bool exclusive, bool noResult, bool continueOnError}) async {
     RootBatch batch = _database.batch();
-    String table = getTable();
-    for (T e in entities) {
-      Map<String, dynamic> values = toValues(e);
+    String table = this.table;
+    entities.forEach((element) {
+      Map<String, dynamic> values = toValues(element);
       batch.insert(table, values);
-    }
-    return batch.commit(exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
+    });
+    return await batch.commit(exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
   }
 
   @override
-  Future<List<dynamic>> batchUpdate(List<T> entities, String whereClause, {List<dynamic> whereArgs,
-      bool exclusive, bool noResult, bool continueOnError}) async {
+  Future<List<dynamic>> batchUpdate(List<T> entities, String primaryKey,
+      {bool exclusive, bool noResult, bool continueOnError}) async {
     RootBatch batch = _database.batch();
-    String table = getTable();
-    for (T e in entities) {
+    String table = this.table;
+    entities?.forEach((e) {
       Map<String, dynamic> values = toValues(e);
-      batch.update(table, values, whereClause, whereArgs: whereArgs);
-    }
+      batch.update(table, values, '$primaryKey = ?', whereArgs: [values[primaryKey]]);
+    });
     return batch.commit(exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
   }
 
   @override
   Future<int> delete(String whereClause, {List<dynamic> whereArgs}) async {
-    return _database.delete(getTable(), where: whereClause, whereArgs: whereArgs);
+    return _database.delete(this.table, where: whereClause, whereArgs: whereArgs);
   }
 
   @override
@@ -74,7 +74,7 @@ abstract class BaseDao<T> implements Dao<T> {
 
   @override
   Future<Map<String, dynamic>> getRowValues(List<String> columnsOrExpressions, String whereClause, {List<dynamic> whereArgs}) async {
-    List<Map<String, dynamic>> data = await _database.rawQuery("SELECT $columnsOrExpressions FROM ${getTable()} WHERE $whereClause LIMIT 1", whereArgs);
+    List<Map<String, dynamic>> data = await _database.query(table, columns: columnsOrExpressions, where: whereClause, whereArgs: whereArgs, limit: 1);
     return data?.isEmpty == true ? null : data.first;
   }
 
@@ -98,17 +98,13 @@ abstract class BaseDao<T> implements Dao<T> {
 
   @override
   Future<bool> has(String whereClause, {List<dynamic> whereArgs}) async {
-    List<Map<String, dynamic>> data = await _database.rawQuery("SELECT COUNT(1) FROM ${getTable()} WHERE $whereClause LIMIT 1", whereArgs);
-    if (data?.isEmpty == true) {
-      return false;
-    }
-    Map<String, dynamic> map = data[0];
-    return map?.isNotEmpty == true;
+    List<Map<String, dynamic>> data = await _database.rawQuery("SELECT COUNT(*) AS _count FROM ${this.table} WHERE $whereClause LIMIT 1", whereArgs);
+    return (data?.first['_count'] ?? 0) > 0;
   }
 
   @override
   Future<int> insert(T entity) {
-    return _database.insert(getTable(), toValues(entity));
+    return _database.insert(this.table, toValues(entity));
   }
 
   @override
@@ -121,7 +117,7 @@ abstract class BaseDao<T> implements Dao<T> {
 
   @override
   Future<T> query(String whereClause, {List<dynamic> whereArgs}) async {
-    List<Map<String, dynamic>> data = await _database.query(getTable(), columns: _columns, where: whereClause, whereArgs: whereArgs);
+    List<Map<String, dynamic>> data = await _database.query(this.table, columns: _columns, where: whereClause, whereArgs: whereArgs);
     if (data?.isEmpty == true) {
       return null;
     }
@@ -139,7 +135,7 @@ abstract class BaseDao<T> implements Dao<T> {
 
   @override
   Future<List<T>> queryMany(String whereClause, {List<dynamic> whereArgs}) async {
-    List<Map<String, dynamic>> data = await _database.query(getTable(), columns: _columns, where: whereClause, whereArgs: whereArgs);
+    List<Map<String, dynamic>> data = await _database.query(this.table, columns: _columns, where: whereClause, whereArgs: whereArgs);
     if (data?.isEmpty == true) {
       return null;
     }
@@ -158,16 +154,16 @@ abstract class BaseDao<T> implements Dao<T> {
 
   @override
   Future<int> update(T entity, String whereClause, {List<dynamic> whereArgs}) {
-    return _database.update(getTable(), toValues(entity), where: whereClause, whereArgs: whereArgs);
+    return _database.update(this.table, toValues(entity), where: whereClause, whereArgs: whereArgs);
   }
 
   @override
   Future<int> updatePart(Map<String, dynamic> values, String whereClause, {List<dynamic> whereArgs}) {
-    return _database.update(getTable(), values, where: whereClause, whereArgs: whereArgs);
+    return _database.update(this.table, values, where: whereClause, whereArgs: whereArgs);
   }
 
   Future<dynamic> _getOne(String columnOrExpression, String whereClause, {List<dynamic> whereArgs}) async {
-    List<Map<String, dynamic>> result = await _database.rawQuery("SELECT $columnOrExpression FROM ${getTable()} WHERE $whereClause LIMIT 1", whereArgs);
+    List<Map<String, dynamic>> result = await _database.rawQuery("SELECT $columnOrExpression FROM ${this.table} WHERE $whereClause LIMIT 1", whereArgs);
     if (result?.isEmpty == true) { /// 无结果
       return null;
     }
@@ -179,7 +175,7 @@ abstract class BaseDao<T> implements Dao<T> {
   }
 
   Future<List<Map<String, dynamic>>> _getMany(String columnOrExpression, String whereClause, {List<dynamic> whereArgs}) async {
-    List<Map<String, dynamic>> data = await _database.rawQuery("SELECT $columnOrExpression FROM ${getTable()} WHERE $whereClause", whereArgs);
+    List<Map<String, dynamic>> data = await _database.rawQuery("SELECT $columnOrExpression FROM ${this.table} WHERE $whereClause", whereArgs);
     return data;
   }
 

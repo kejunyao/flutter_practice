@@ -46,7 +46,6 @@ class RawQueryTask extends RootTask<Map<String, dynamic>> {
   final String sql;
   final List<dynamic> whereArgs;
   RawQueryTask(Type type, LiteResultCallback<Map<String, dynamic>> resultCallback, this.sql, this.whereArgs) : super(type, resultCallback);
-
 }
 
 /// 插入实体，[RootDao.insert]
@@ -84,15 +83,15 @@ class UpdateTask<T> extends QueryTask<int> {
 }
 
 /// 按条件批量更新, [RootDao.batchUpdate]
-class BatchUpdateTask<T> extends QueryTask<List<dynamic>> {
+class BatchUpdateTask<T> extends RootTask<List<dynamic>> {
   final List<T> entities;
+  final String primaryKey;
   final bool exclusive;
   final bool noResult;
   final bool continueOnError;
-  BatchUpdateTask(Type type, LiteResultCallback<List<List>> resultCallback,
-      this.entities, String whereClause,
-      {List<dynamic> whereArgs, this.exclusive, this.noResult, this.continueOnError})
-      : super(type, resultCallback, whereClause, whereArgs);
+  BatchUpdateTask(Type type, LiteResultCallback<List> resultCallback,
+  this.entities, this.primaryKey, {this.exclusive, this.noResult, this.continueOnError})
+      : super(type, resultCallback);
 }
 
 /// 删除符合条件的记录，[RootDao.delete]
@@ -199,7 +198,7 @@ class TaskExecutor {
     } else if (task is UpdatePart) {
       result = await lite.updatePart(task.type, task.values, task.whereClause, whereArgs: task.whereArgs);
     } else if (task is BatchUpdateTask) {
-      result = await lite.batchUpdate(task.type, task.entities, task.whereClause, whereArgs: task.whereArgs,
+      result = await lite.batchUpdate(task.type, task.entities, task.primaryKey,
           exclusive: task.exclusive, noResult: task.noResult, continueOnError: task.continueOnError);
     } else if (task is DeleteTask) {
       result = await lite.delete(task.type, task.whereClause, whereArgs: task.whereArgs);

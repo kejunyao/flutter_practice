@@ -35,23 +35,13 @@ class Book {
 
 class BookDaoImpl extends BaseDao<Book> {
 
-  final table = 'book';
+  final _table = 'book';
 
-  final List<TableColumn> columns = [
+  final List<TableColumn> _columns = [
     TableColumn.of(Book.key_id).integerType().primaryKey(),
     TableColumn.of(Book.key_name).textType().defaultStringValue(''),
     TableColumn.of(Book.key_desc).textType().defaultStringValue('')
   ];
-
-  @override
-  List<TableColumn> getColumns() {
-    return columns;
-  }
-
-  @override
-  String getTable() {
-    return table;
-  }
 
   @override
   Book toEntity(Map<String, dynamic> map) {
@@ -62,5 +52,11 @@ class BookDaoImpl extends BaseDao<Book> {
   Map<String, dynamic> toValues(Book entity) {
     return Book.toMap(entity);
   }
+
+  @override
+  List<TableColumn> get columns => _columns;
+
+  @override
+  String get table => _table;
 
 }

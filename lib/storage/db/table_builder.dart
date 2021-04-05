@@ -2,19 +2,19 @@ import 'dart:core';
 import 'package:flutter_practice/storage/db/base_dao.dart';
 import 'package:flutter_practice/storage/db/database.dart';
 import 'package:flutter_practice/storage/db/table_column.dart';
-import 'log.dart';
+import 'db_log.dart';
 
 /// 数据库表
 class TableBuilder {
 
   /// 创建数据库表
-  Future<bool> createTable(RootDatabase db, BaseDao dao, {bool debug = false, String tag = Log.TAG}) async {
-    String table = dao.getTable();
-    String sql = buildCreateTableSql(table, dao.getColumns());
+  Future<bool> createTable(RootDatabase db, BaseDao dao, {bool debug = false, String tag = DbLog.TAG}) async {
+    String table = dao.table;
+    String sql = buildCreateTableSql(table, dao.columns);
     try {
       await db.execute(sql);
       if (debug) {
-        Log.dSingle("$table表创建成功: $sql", currClass: this, tag: tag);
+        DbLog.dSingle("$table表创建成功: $sql", currClass: this, tag: tag);
       }
     } catch (e) {
       if (debug) throw e;
@@ -24,10 +24,10 @@ class TableBuilder {
 
   /// 检查某张表结构完成性
   Future<bool> checkTableIntegrity(RootDatabase db, Map<String, List<String>> tables, BaseDao dao,
-      {bool debug = false, String tag = Log.TAG}) async {
+      {bool debug = false, String tag = DbLog.TAG}) async {
     /// 目前需要的字段
-    List<TableColumn> tbColumns = dao.getColumns();
-    String table = dao.getTable();
+    List<TableColumn> tbColumns = dao.columns;
+    String table = dao.table;
     if (tables.containsKey(table)) {
       /// 数据库中已有的字段
       List<String> columns = tables[table];
@@ -38,12 +38,12 @@ class TableBuilder {
           /// 3、关于字段更新处理，开发者可以给Lite设置数据库版本监听callback，在callback中进行更新，这里出于性能考虑，只对没有的字段进行添加处理。
           if (columns.contains(e.name)) {
             /// 字段已存在
-            if (debug) Log.dSingle('$table.${e.name}已存在!', tag: tag);
+            if (debug) DbLog.dSingle('$table.${e.name}已存在!', tag: tag);
           } else {
             String sql = e.buildAddColumnSql(table);
             try {
               await db.execute(sql);
-              if (debug) Log.dSingle('$table.${e.name}字段新增成功!', tag: tag);
+              if (debug) DbLog.dSingle('$table.${e.name}字段新增成功!', tag: tag);
             } catch(e) {
               if (debug) throw e;
             }
@@ -57,7 +57,7 @@ class TableBuilder {
 
   /// 查找数据库中所有的表
   Future<Map<String, List<String>>> findTables(RootDatabase db,
-      {bool debug = false, String tag = Log.TAG}) async {
+      {bool debug = false, String tag = DbLog.TAG}) async {
     List<Map<String, dynamic>> data = await db.rawQuery(
         "SELECT name, sql FROM sqlite_master WHERE type = ?",
         ['table']
@@ -69,7 +69,7 @@ class TableBuilder {
       if (table?.isNotEmpty == true) {
         tables[table] = _toColumns(sql);
       }
-      if (debug) Log.dSingle('findTables, table: $table, sql: $sql, columns: ${tables[table]}');
+      if (debug) DbLog.dSingle('findTables, table: $table, sql: $sql, columns: ${tables[table]}');
     });
     return tables;
   }

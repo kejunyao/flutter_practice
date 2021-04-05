@@ -58,11 +58,10 @@ abstract class Dao<T> {
 
   /// 按条件批量更新
   /// [entities] 批量实体
-  /// [whereClause] 更新条件
-  /// [whereArgs] 更新条件中的参数
+  /// [primaryKey] 主键
   /// return true，批量更新成功；false，批量更新失败
-  Future<List<dynamic>> batchUpdate(List<T> entities, String whereClause,
-      {List<dynamic> whereArgs, bool exclusive, bool noResult, bool continueOnError});
+  Future<List<dynamic>> batchUpdate(List<T> entities, String primaryKey,
+      {bool exclusive, bool noResult, bool continueOnError});
 
   /// 删除符合条件的记录
   /// [whereClause] 删除条件

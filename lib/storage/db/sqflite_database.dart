@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 import 'callback.dart';
 import 'db_utils.dart';
-import 'log.dart';
+import 'db_log.dart';
 import 'time_recorder.dart';
 
 /// sqflite数据库接入实现
@@ -34,7 +34,7 @@ class SqfliteDatabase implements RootDatabase {
     TimeRecorder recorder;
     if (_debug) {
       recorder = TimeRecorder.of();
-      Log.dSingle('开始创建数据库${DbUtils.filename(path)}, ${recorder.time}', currClass: this, tag: _debugTag);
+      DbLog.dSingle('开始创建数据库${DbUtils.filename(path)}, ${recorder.time}', currClass: this, tag: _debugTag);
     }
     _database = await openDatabase(
         path,
@@ -42,7 +42,7 @@ class SqfliteDatabase implements RootDatabase {
         onCreate: (Database db, int version) {
           if (_debug) {
             recorder.record();
-            Log.dSingle(
+            DbLog.dSingle(
                 '创建数据库${DbUtils.filename(path)}, ${recorder.info}, version: $version',
                 currClass: this,
                 tag: _debugTag
@@ -53,7 +53,7 @@ class SqfliteDatabase implements RootDatabase {
         onUpgrade: (Database db, int oldVersion, int newVersion) {
           if (_debug) {
             recorder.record();
-            Log.dSingle(
+            DbLog.dSingle(
                 '升级数据库${DbUtils.filename(path)}, ${recorder.info}, oldVersion: $oldVersion, newVersion: $newVersion',
                 currClass: this,
                 tag: _debugTag
@@ -64,7 +64,7 @@ class SqfliteDatabase implements RootDatabase {
         onDowngrade: (Database db, int oldVersion, int newVersion) {
           if (_debug) {
             recorder.record();
-            Log.dSingle(
+            DbLog.dSingle(
                 '降级数据库${DbUtils.filename(path)}, ${recorder.info}, oldVersion: $oldVersion, newVersion: $newVersion',
                 currClass: this,
                 tag: _debugTag
@@ -75,7 +75,7 @@ class SqfliteDatabase implements RootDatabase {
         onOpen: (Database db) {
           if (_debug) {
             recorder.record();
-            Log.dSingle(
+            DbLog.dSingle(
                 '打开数据库${DbUtils.filename(path)}, time: ${recorder.info}',
                 currClass: this,
                 tag: _debugTag
@@ -84,7 +84,7 @@ class SqfliteDatabase implements RootDatabase {
           if (onDatabaseOpen != null) onDatabaseOpen(sqfliteDatabase);
         }
     );
-    _batchImpl = BatchImpl(_database);
+    _batchImpl = BatchImpl(_database.batch());
   }
 
   @override
@@ -164,22 +164,22 @@ class SqfliteDatabase implements RootDatabase {
 
 class BatchImpl extends RootBatch {
 
-  final Database database;
-  BatchImpl(this.database);
+  final Batch batch;
+  BatchImpl(this.batch);
 
   @override
-  Future<List> commit({bool exclusive, bool noResult, bool continueOnError}) {
-    return database.batch().commit(exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
+  Future<List<dynamic>> commit({bool exclusive, bool noResult, bool continueOnError}) async {
+    return batch.commit(exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
   }
 
   @override
   void insert(String table, Map<String, dynamic> values, {String nullColumnHack}) {
-    database.batch().insert(table, values, nullColumnHack: nullColumnHack);
+    batch.insert(table, values, nullColumnHack: nullColumnHack);
   }
 
   @override
   void update(String table, Map<String, dynamic> values, String where, {List whereArgs}) {
-    database.batch().update(table, values, where: where, whereArgs: whereArgs);
+    batch.update(table, values, where: where, whereArgs: whereArgs);
   }
 
 }

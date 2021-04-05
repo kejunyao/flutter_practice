@@ -13,10 +13,10 @@ import 'db_utils.dart';
 import 'lite_task.dart';
 import 'lite.dart';
 import 'callback.dart';
-import 'log.dart';
+import 'db_log.dart';
 
 /// 数据库所有操作Base实现
-class BaseLite implements OnDatabaseCallback, Lite {
+abstract class BaseLite implements OnDatabaseCallback, Lite {
 
   final Map<Type, Dao> _daoMap = {};
 
@@ -25,11 +25,11 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   final SqfliteDatabase _database = SqfliteDatabase();
 
-  final String dbName;
-  final int dbVersion;
-  final bool checkIntegrityAuto;
+  String get databaseName;
+  int get databaseVersion;
+  bool get checkIntegrityAuto;
 
-  BaseLite(this.dbName, this.dbVersion, this.checkIntegrityAuto) {
+  BaseLite() {
     taskExecutor = TaskExecutor(this);
   }
 
@@ -88,7 +88,7 @@ class BaseLite implements OnDatabaseCallback, Lite {
   void init() async {
     if (_initialized || _initializing) {
       if (_debug) {
-        Log.dSingle('$dbName已初始化完毕，请勿重复初始化!', tag: _debugTag);
+        DbLog.dSingle('$databaseName已初始化完毕，请勿重复初始化!', tag: _debugTag);
       }
       return;
     }
@@ -96,24 +96,24 @@ class BaseLite implements OnDatabaseCallback, Lite {
     TimeRecorder recorder;
     if (_debug) {
       recorder = TimeRecorder.of();
-      Log.dSingle(
-          '开始初始化$dbName，${recorder.info}',
+      DbLog.dSingle(
+          '开始初始化$databaseName，${recorder.info}',
           currClass: this,
           tag: _debugTag
       );
     }
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, dbName);
+    String path = join(documentsDirectory.path, databaseName);
     if (_debug) {
       recorder.record();
-      Log.dSingle(
-          'documentsDirectory: $path, ${recorder.info}, version: $dbVersion',
+      DbLog.dSingle(
+          'documentsDirectory: $path, ${recorder.info}, version: $databaseVersion',
           currClass: this,
           tag: _debugTag);
     }
     await _database.openSqfliteDatabase(
         path,
-        version: dbVersion,
+        version: databaseVersion,
         onDatabaseCreate: _onDatabaseCreate,
         onDatabaseUpgrade: _onDatabaseUpgradeCallback,
         onDatabaseDowngrade: _onDatabaseDowngradeCallback,
@@ -121,8 +121,8 @@ class BaseLite implements OnDatabaseCallback, Lite {
     );
     if (_debug) {
       recorder.record();
-      Log.dSingle(
-          'openSqfliteDatabase，${DbUtils.filename(path)}, ${recorder.info}, version: $dbVersion',
+      DbLog.dSingle(
+          'openSqfliteDatabase，${DbUtils.filename(path)}, ${recorder.info}, version: $databaseVersion',
           currClass: this,
           tag: _debugTag
       );
@@ -130,8 +130,8 @@ class BaseLite implements OnDatabaseCallback, Lite {
     await _checkDatabaseIntegrity();
     if (_debug) {
       recorder.record();
-      Log.dSingle(
-          '_checkDatabaseIntegrity，${DbUtils.filename(path)}, ${recorder.info}, version: $dbVersion',
+      DbLog.dSingle(
+          '_checkDatabaseIntegrity，${DbUtils.filename(path)}, ${recorder.info}, version: $databaseVersion',
           currClass: this,
           tag: _debugTag
       );
@@ -141,7 +141,7 @@ class BaseLite implements OnDatabaseCallback, Lite {
     if (onDatabaseInitialized != null) onDatabaseInitialized();
     if (_debug) {
       recorder.record();
-      Log.dSingle(
+      DbLog.dSingle(
           'init，${recorder.info}',
           currClass: this,
           tag: _debugTag
@@ -152,7 +152,7 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   /// 检查数据库表完整性
   Future<void> _checkDatabaseIntegrity() async {
-    if (!checkIntegrityAuto) {
+    if (!(checkIntegrityAuto ?? false)) {
       return;
     }
     Map<String, List<String>> tables = await tableBuilder.findTables(_database, debug: _debug, tag: _debugTag);
@@ -180,7 +180,7 @@ class BaseLite implements OnDatabaseCallback, Lite {
     } else {
       /// 非debug模式
       if (_onDatabaseErrorCallback == null) {
-        Log.dSingle(message, currClass: this, tag: _debugTag);
+        DbLog.dSingle(message, currClass: this, tag: _debugTag);
       } else {
         _onDatabaseErrorCallback(FlutterError(message));
       }
@@ -198,33 +198,29 @@ class BaseLite implements OnDatabaseCallback, Lite {
   }
 
   void _onDatabaseCreate(RootDatabase db, int version) {
-    if (!checkIntegrityAuto) {
+    if (!(checkIntegrityAuto ?? false)) {
       _daoMap.forEach((key, value) {
         if (version is BaseDao) tableBuilder.createTable(db, version as BaseDao);
       });
     }
     if (_onDatabaseCreateCallback != null) _onDatabaseCreateCallback(db, version);
-    if (_debug) Log.dSingle('_onDatabaseCreate', currClass: this, tag: _debugTag);
+    if (_debug) DbLog.dSingle('_onDatabaseCreate', currClass: this, tag: _debugTag);
   }
 
   @override
   Future<List<dynamic>> batchInsert<T>(Type type, List<T> entities, {bool exclusive, bool noResult, bool continueOnError}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       List<dynamic> result = await _daoMap[type].batchInsert(entities, exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
       if (_debug) {
         recorder.record();
-        String log = """
-            batchInsert(type: ${type.runtimeType.toString()}, 
-            entities: $entities, 
-            exclusive: $exclusive, 
-            noResult: $noResult, 
-            continueOnError: $continueOnError)
-            \nresult: $result,
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'batchInsert', type, result, recorder.info,
+            entities: entities,
+            exclusive: exclusive, noResult: noResult, continueOnError: continueOnError
+        );
       }
       return result;
     } catch (e) {
@@ -234,25 +230,18 @@ class BaseLite implements OnDatabaseCallback, Lite {
   }
 
   @override
-  Future<List<dynamic>> batchUpdate<T>(Type type, List<T> entities, String whereClause, {List<dynamic> whereArgs, bool exclusive, bool noResult, bool continueOnError}) async {
+  Future<List<dynamic>> batchUpdate<T>(Type type, List<T> entities, String primaryKey, {bool exclusive, bool noResult, bool continueOnError}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
-      List<dynamic> result = await _daoMap[type].batchUpdate(entities, whereClause, whereArgs: whereArgs, exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
+      List<dynamic> result = await _daoMap[type].batchUpdate(entities, primaryKey, exclusive: exclusive, noResult: noResult, continueOnError: continueOnError);
       if (_debug) {
         recorder.record();
-        String log = """
-            batchUpdate(type: ${type.runtimeType.toString()}, 
-            entities: $entities, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs, 
-            exclusive: $exclusive, 
-            noResult: $noResult, 
-            continueOnError: $continueOnError)
-            \nresult: $result,
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'batchUpdate', type, result, recorder.info,
+            primaryKey: primaryKey, exclusive: exclusive, noResult: noResult, continueOnError: continueOnError
+        );
       }
       return result;
     } catch (e) {
@@ -263,21 +252,33 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<int> delete(Type type, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       int result = await _daoMap[type].delete(whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            delete(type: ${type.runtimeType.toString()}, 
-            whereClause: $whereClause, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs)
-            \nresult: $result,
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(_debugTag, _daoMap[type], 'delete', type, result, recorder.info,
+            whereClause: whereClause, whereArgs: whereArgs);
+      }
+      return result;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  @override
+  Future<int> deleteAll(Type type) async {
+    if (!_initialized) return null;
+    try {
+      TimeRecorder recorder;
+      if (_debug) recorder = TimeRecorder.of();
+      int result = await _daoMap[type].delete('1 = 1');
+      if (_debug) {
+        recorder.record();
+        DbLog.printResult(_debugTag, _daoMap[type], 'deleteAll', type, result, recorder.info);
       }
       return result;
     } catch (e) {
@@ -288,19 +289,14 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<bool> exeTransaction(Future<bool> Function(Transaction txn) action, {bool exclusive}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       bool result = await _database.transaction<bool>(action, exclusive: exclusive);
       if (_debug) {
         recorder.record();
-        String log = """
-            exeTransaction(action: ${action?.runtimeType?.toString()}, 
-            exclusive: $exclusive)
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(_debugTag, null, 'exeTransaction', null, result, recorder.info, exclusive: exclusive);
       }
       return result;
     } catch (e) {
@@ -311,21 +307,17 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<int> getInt(Type type, String columnOrExpression, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       int result = await _daoMap[type].getInt(columnOrExpression, whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            getInt(type: ${type.runtimeType.toString()}, 
-            columnOrExpression: $columnOrExpression, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs),
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'getInt', type, result, recorder.info,
+            columnOrExpression: columnOrExpression, whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -336,20 +328,16 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<List<int>> getInts(Type type, String columnOrExpression, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       List<int> result = await _daoMap[type].getInts(columnOrExpression, whereClause, whereArgs: whereArgs);
       if (_debug) {
-        String log = """
-            getInts(type: ${type.runtimeType.toString()}, 
-            columnOrExpression: $columnOrExpression, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs), 
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        recorder.record();
+        DbLog.printResult(_debugTag, _daoMap[type], 'getInts', type, result, recorder.info,
+            columnOrExpression: columnOrExpression, whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -360,20 +348,15 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<Map<String, dynamic>> getRowValues(Type type, List<String> columnsOrExpressions, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       Map<String, dynamic> result = await _daoMap[type].getRowValues(columnsOrExpressions, whereClause, whereArgs: whereArgs);
       if (_debug) {
-        String log = """
-            getRowValues(type: ${type.runtimeType.toString()}, 
-            columnOrExpression: $columnsOrExpressions, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs), 
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        recorder.record();
+        DbLog.printResult(_debugTag, _daoMap[type], 'getRowValues', type, result, recorder.info,
+            columnsOrExpressions: columnsOrExpressions, whereClause: whereClause, whereArgs: whereArgs);
       }
       return result;
     } catch (e) {
@@ -384,21 +367,20 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<String> getString(Type type, String columnOrExpression, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) {
+      return null;
+    }
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       String result = await _daoMap[type].getString(columnOrExpression, whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            getString(type: ${type.runtimeType.toString()}, 
-            columnOrExpression: $columnOrExpression, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs), 
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(_debugTag, _daoMap[type], 'getString', type, result, recorder.info,
+            columnOrExpression: columnOrExpression,
+          whereClause: whereClause,
+          whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -409,21 +391,16 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<List<String>> getStrings(Type type, String columnOrExpression, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       List<String> result = await _daoMap[type].getStrings(columnOrExpression, whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            getStrings(type: ${type.runtimeType.toString()}, 
-            columnOrExpression: $columnOrExpression, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs), 
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(_debugTag, _daoMap[type], 'getStrings', type, result, recorder.info,
+            columnOrExpression: columnOrExpression, whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -434,20 +411,16 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<bool> has(Type type, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       bool result = await _daoMap[type].has(whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            has(type: ${type.runtimeType.toString()}, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs), 
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(_debugTag, _daoMap[type], 'has', type, result, recorder.info,
+            whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -458,13 +431,14 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<int> insert<T>(Type type, T entity) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       int result = await _daoMap[type].insert(entity);
       if (_debug) {
         recorder.record();
-        Log.printResult(_debugTag, _daoMap[type], 'insert', type, entity, null, null, null, result, recorder.info);
+        DbLog.printResult(_debugTag, _daoMap[type], 'insert', type, result, recorder.info, entity: entity);
       }
       return result;
     } catch (e) {
@@ -475,13 +449,17 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<int> insertOrUpdate<T>(Type type, T entity, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       int result = await _daoMap[type].insertOrUpdate(entity, whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        Log.printResult(_debugTag, _daoMap[type], 'insertOrUpdate', type, entity, null, whereClause, whereArgs, result, recorder.info);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'insertOrUpdate', type, result, recorder.info, entity: entity,
+            whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -492,20 +470,17 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<T> query<T>(Type type, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       T result = await _daoMap[type].query(whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            query(type: ${type.runtimeType.toString()}, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs) 
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'query', type, result, recorder.info,
+            whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -516,13 +491,14 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<List<T>> queryAll<T>(Type type) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       List<T> result = await _daoMap[type].queryAll();
       if (_debug) {
         recorder.record();
-        Log.printQueryResult(_debugTag, _daoMap[type], 'queryAll', type, null, null, result, recorder.info);
+        DbLog.printResult(_debugTag, _daoMap[type], 'queryAll', type, result, recorder.info);
       }
       return result;
     } catch (e) {
@@ -533,13 +509,17 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<List<T>> queryMany<T>(Type type, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       List<T> result = await _daoMap[type].queryMany(whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        Log.printQueryResult(_debugTag, _daoMap[type], 'queryMany', type, whereClause, whereArgs, result, recorder.info);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'queryMany', type, result, recorder.info,
+            whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -550,20 +530,17 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<List<Map<String, dynamic>>> rawQuery(Type type, String sql, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       List<Map<String, dynamic>> result = await _daoMap[type].rawQuery(sql, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            rawQuery(type: ${type.runtimeType.toString()}, 
-            sql: $sql, 
-            whereArgs: $whereArgs)
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'rawQuery', type, result, recorder.info,
+            sql: sql, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -574,13 +551,17 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<int> update<T>(Type type, T entity, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       int result = await _daoMap[type].update(entity, whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        Log.printResult(_debugTag, _daoMap[type], 'update', type, entity, null, whereClause, whereArgs,result, recorder.info);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'update', type, result, recorder.info, entity: entity,
+            whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
@@ -591,21 +572,17 @@ class BaseLite implements OnDatabaseCallback, Lite {
 
   @override
   Future<int> updatePart(Type type, Map<String, dynamic> values, String whereClause, {List<dynamic> whereArgs}) async {
+    if (!_initialized) return null;
     try {
       TimeRecorder recorder;
       if (_debug) recorder = TimeRecorder.of();
       int result = await _daoMap[type].updatePart(values, whereClause, whereArgs: whereArgs);
       if (_debug) {
         recorder.record();
-        String log = """
-            updatePart(type: ${type.runtimeType.toString()}, 
-            values: $values, 
-            whereClause: $whereClause, 
-            whereArgs: $whereArgs)
-            \nresult: $result
-            \n${recorder.info}
-            """;
-        Log.printAfter(this, log, tag: _debugTag);
+        DbLog.printResult(
+            _debugTag, _daoMap[type], 'update', type, result, recorder.info, values: values,
+            whereClause: whereClause, whereArgs: whereArgs
+        );
       }
       return result;
     } catch (e) {
