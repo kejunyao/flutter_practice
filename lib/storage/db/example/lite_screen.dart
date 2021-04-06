@@ -7,6 +7,7 @@ import '../../../item.dart';
 import 'delete_screen.dart';
 import 'example_database_manager.dart';
 import 'insert_and_update_sreen.dart';
+import 'lite_task_sreen.dart';
 
 class LiteScreen extends BaseListView {
 
@@ -20,6 +21,7 @@ class LiteScreen extends BaseListView {
     items.add(Item('Query（先手动初始化）', QueryScreen()));
     items.add(Item('Delete（先手动初始化）', DeleteScreen()));
     items.add(Item('Transaction（先手动初始化）', TransactionScreen()));
+    items.add(Item('LiteTask（不要先手动初始化）', LiteTaskScreen()));
     return items;
   }
 

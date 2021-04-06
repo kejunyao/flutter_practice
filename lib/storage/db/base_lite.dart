@@ -150,6 +150,9 @@ abstract class BaseLite implements OnDatabaseCallback, Lite {
     taskExecutor?.execute();
   }
 
+  /// 是否已初始化完毕
+  bool get initialized => _initialized;
+
   /// 检查数据库表完整性
   Future<void> _checkDatabaseIntegrity() async {
     if (!(checkIntegrityAuto ?? false)) {

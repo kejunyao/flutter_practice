@@ -68,5 +68,12 @@
 3.9、table_column.dart，[TableColumn]数据库表字段数据结构；
 3.10、db_log.dart，[DbLog]数据库日志工具类；
 3.11、db_utils.dart，[DbUtils]数据库工具类；
-3.12、time_recorder.dart，[TimeRecorder]时间录制器，提供：当前时间输出、每一个操作步骤耗时、整体操作耗时。
+3.12、time_recorder.dart，[TimeRecorder]时间录制器，提供：当前时间输出、每一个操作步骤耗时、整体操作耗时。\
+
+# 四、lite_task.dart，定义了数据库所有行为的安全实现：
+App冷启动之后，数据库需要初始化，而初始化是一个稍微耗时的操作；
+此时，如果数据库还未初始化完毕，就开始对数据库记录进行增、删、改、查操作，势必操作失败；
+为解决此类问题，LiteTask提供了方案：
+4.1、先构建LiteTask，在lite_task.dart中已经将EasyLite所有的操作行为，都定义过相应的Task；
+4.2、然后将构造的Task作为参数，传入到XXXLite的[executeSafely(RootTask task)]方法中执行。
 
