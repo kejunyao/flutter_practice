@@ -37,3 +37,36 @@
 2、请查看数据库定义接口[Lite](在lite.dart文件中)，每个定义方法的上方，注释写的很清楚；
 3、关于[Dao]有Base实现类[BaseDao]，在base_dao.dart文件中；
       [Lite]有Base实现类，在base_lite.dart文件中。
+      
+# 三、EasyLite代码结构说明，根目录：package:flutter_practice/storage/db/
+3.1、lite.dart, [Lite]，定义了数据库行为基类；
+3.2、base_lite.dart，[BaseLite]，实现了数据库基本行为；
+
+3.3、dao.dart，[Dao]，定义了数据库表行为基类；
+3.4、base_dao.dart，[Dao]，实现了数据库表基本行为；
+
+3.5、callback.dart，[OnDatabaseCallback]，定义了数据库所有的回调，
+    3.5.1、[OnDatabaseCallback]中的回调方法：
+    [OnDatabaseCallback.setOnDatabaseCreate]: 设置数据库创建回调；
+    [OnDatabaseCallback.setOnDatabaseOpen]: 设置数据库打开回调；
+    [OnDatabaseCallback.setOnDatabaseUpgrade]: 设置数据库升级回调；
+    [OnDatabaseCallback.setOnDatabaseDowngrade]: 设置数据库降级回调；
+    [OnDatabaseCallback.setOnDatabaseError]: 设置数据库错误回调；
+    [OnDatabaseCallback.setOnDatabaseInitialized]: 设置数据库初始化完成回调；
+    3.5.2、[OnDatabaseCallback]中定义的回调函数：
+    [OnDatabaseError]: 数据库错误回调；
+    [OnDatabaseInitialized]: 数据库初始化完成回调；
+    [OnDatabaseVersionChange]: 数据库升级/降级回调；
+    [OnDatabaseCreate]: 数据库创建回调；
+    [OnDatabaseConfigure]: 数据库配置回调；
+    
+3.6、database.dart，[RootDatabase]定义了数据库基础库行为；
+3.7、sqflite_database.dart, [SqfliteDatabase]，数据库基础库封装类
+    EasyLite是对三方库sqflite作的进一步封装，使得数据库操作变得更友好、方便，考虑到后期可能换成其他三方库，故对sqflite作一层包装，并将其基本能力暴露出去；
+
+3.8、table_builder.dart，[TableBuilder]实现了数据库表创建、数据库表字段新增等操作；
+3.9、table_column.dart，[TableColumn]数据库表字段数据结构；
+3.10、db_log.dart，[DbLog]数据库日志工具类；
+3.11、db_utils.dart，[DbUtils]数据库工具类；
+3.12、time_recorder.dart，[TimeRecorder]时间录制器，提供：当前时间输出、每一个操作步骤耗时、整体操作耗时。
+
