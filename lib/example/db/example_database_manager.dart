@@ -1,5 +1,5 @@
 import 'package:flutter_practice/storage/db/base_lite.dart';
-import 'package:flutter_practice/storage/db/example/book.dart';
+import 'package:flutter_practice/example/db/book.dart';
 
 /// 数据库接入示例
 class ExampleDatabaseManager extends BaseLite {

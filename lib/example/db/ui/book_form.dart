@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_practice/storage/db/example/book.dart';
+import 'package:flutter_practice/example/db/book.dart';
 
 /// 书本表单
 class BookForm extends StatefulWidget {

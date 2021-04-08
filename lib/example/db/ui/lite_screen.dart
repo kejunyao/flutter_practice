@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_practice/example/base_list_view_screen.dart';
-import 'package:flutter_practice/storage/db/example/query_screen.dart';
-import 'package:flutter_practice/storage/db/example/transaction_screen.dart';
-
+import 'package:flutter_practice/example/db/ui/query_screen.dart';
+import 'package:flutter_practice/example/db/ui/transaction_screen.dart';
 import '../../../item.dart';
 import 'delete_screen.dart';
-import 'example_database_manager.dart';
+import '../example_database_manager.dart';
 import 'insert_and_update_sreen.dart';
 import 'lite_task_sreen.dart';
 

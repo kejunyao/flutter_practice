@@ -9,20 +9,16 @@ typedef OnItemSelectedCallback = Function(int index, Item item);
 abstract class BaseListView extends StatelessWidget {
 
   final List<Item> items = [];
-
   final String title;
-  BaseListView({Key key, this.title}) : super(key: key) {
+  BaseListView({Key key, this.title}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     this.items.clear();
     List<Item> _items = buildItems();
     if (_items?.isNotEmpty == true) {
       this.items.addAll(_items);
     }
-
-    // CompatibleTextEditingController
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -50,7 +46,7 @@ abstract class BaseListView extends StatelessWidget {
           );
           return GestureDetector(
             onTap: () {
-              NavigatorUtils.push(context, item.page);
+              if (item.page != null) NavigatorUtils.push(context, item.page);
             },
             child: widget,
           );

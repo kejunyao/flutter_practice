@@ -32,10 +32,10 @@ class DbLog {
     if (primaryKey != null) sb.write(", primaryKey: $primaryKey");
     if (columnsOrExpressions != null) sb.write(", columnsOrExpressions: $columnsOrExpressions");
     if (exclusive != null) sb.write(', exclusive: $exclusive');
-    if (exclusive != null) sb.write(', noResult: $noResult');
-    if (exclusive != null) sb.write(', continueOnError: $continueOnError');
-    if (whereClause?.isNotEmpty == true) sb.write(', whereClause: $whereClause');
-    if (whereArgs?.isNotEmpty == true) sb.write(', whereArgs: $whereArgs');
+    if (noResult != null) sb.write(', noResult: $noResult');
+    if (continueOnError != null) sb.write(', continueOnError: $continueOnError');
+    if (whereClause != null) sb.write(', whereClause: $whereClause');
+    if (whereArgs != null) sb.write(', whereArgs: $whereArgs');
     sb.write(')');
     sb.write('\nresult: $result');
     if (info?.isNotEmpty == true) sb.write('\n$info');

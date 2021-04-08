@@ -23,6 +23,7 @@ environment:
 dependencies:
   sqflite: 0.13.0+1
   path_provider: 1.6.27
+  noripple_overscroll: ^0.0.2
   flutter:
     sdk: flutter
 

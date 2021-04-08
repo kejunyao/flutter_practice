@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_practice/example/base_list_view_screen.dart';
 import 'package:flutter_practice/item.dart';
+import 'package:flutter_practice/widgets/compatible/keyboard_compatible.dart';
 import 'package:flutter_practice/widgets/dashed_line.dart';
 import 'package:flutter_practice/widgets/star_rating.dart';
 import 'compatible_text_editing.dart';
@@ -32,6 +33,7 @@ class WidgetListScreen extends BaseListView {
         )
     );
     items.add(Item.withScaffold('CompatibleTextEditingController', CompatibleTextEditing()));
+    items.add(Item('键盘兼容性问题', KeyboardCompatibleWidget()));
     return items;
   }
 

@@ -11,7 +11,7 @@
     [databaseName]：数据库文件名称；
     [databaseVersion]：当前数据库版本；
 1.2）接步骤1.1），设置是否开启debug模式，若开启debug模式，最好设置debug全局tag（默认为EasyLite）；
-# 以上步骤，请参考：package:flutter_practice/storage/db/example/example_database_manager.dart
+# 以上步骤，请参考：package:flutter_practice/example/db/example_database_manager.dart
 
 # 2、实现实体增、删、改、查
 2.1）继承BaseDao实现实体Dao的实现类XXXDaoImp，分别提供[table]、[columns]:
@@ -20,11 +20,11 @@
 2.2）分别实现[toEntity]、[toValues]等方法：
     [toEntity]：将[Map]转为实体Entity；
     [toValues]：将实体Entity转为[Map]；
-# 以上步骤，请参考：# 如：package:flutter_practice/storage/db/example/book.dart，BookDaoImp
+# 以上步骤，请参考：# 如：package:flutter_practice/example/db/book.dart，BookDaoImp
 
 # 3、将Dao实现类注册到Lite中
 3.1）将Dao实现注册到Lite中，如：registerDao(XXX, XXXDaoImpl());
-# 以上步骤，请参考：package:flutter_practice/storage/db/example/example_database_manager.dart，ExampleDatabaseManager._()
+# 以上步骤，请参考：package:flutter_practice/example/db/example_database_manager.dart，ExampleDatabaseManager._()
 
 # 4、初始化数据库
 4.1）调用Lite的初始化方法，进行数据库初始化，如：XXXLite.init();

@@ -1,14 +1,15 @@
 import 'dart:collection';
-
 import 'package:flutter_practice/storage/db/lite.dart';
+import 'db_log.dart';
 
 /// 任务执行结果回调
 typedef OnLiteResult<R> = Function(R result);
 
 /// 数据库操作任务
 class RootTask<R> {
-
+  /// 实体runtimeType
   final Type type;
+  /// 操作返回结果
   final OnLiteResult<R> onResult;
 
   RootTask(this.type, this.onResult);
@@ -156,7 +157,7 @@ class TaskExecutor {
   ///
   /// 任务采用双链表实现的队列存储，主要有以下考虑：
   ///
-  /// 1、链表内存是动态分配的，因数组内存大小固定，涉及到扩容，会影响性能；
+  /// 1、链表内存是动态分配的，因数组内存大小固定，涉及到扩容、缩容，会影响性能；
   ///
   /// 2、链表的缺陷是查找，而在这里，任务从表头加入，从表尾消费（移除），不仅保证顺序，还不会影响查找性能；
   Queue<RootTask> _tasks = DoubleLinkedQueue();
@@ -263,8 +264,7 @@ class TaskExecutor {
       dynamic result = await lite.query(task.type, task.whereClause, whereArgs: task.whereArgs);
       if (task.onResult != null) task.onResult(result);
       return;
-    } else {
-      /// 无法识别的Task
     }
+    DbLog.dSingle('Unrecognized Lite task！');
   }
 }

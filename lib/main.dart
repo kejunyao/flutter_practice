@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_practice/example/base_grid_view_screen.dart';
 import 'package:flutter_practice/item.dart';
-import 'package:flutter_practice/storage/db/base_lite.dart';
-import 'package:flutter_practice/storage/db/example/lite_screen.dart';
+import 'package:flutter_practice/example/db/ui/lite_screen.dart';
+import 'package:flutter_practice/widgets/example/device_info_screen.dart';
 import 'package:flutter_practice/widgets/example/widget_list_screen.dart';
 
 void main() {
@@ -34,6 +34,7 @@ class MyHomePage extends BaseGridView {
     List<Item> items = [];
     items.add(Item('Widget', WidgetListScreen(title: 'Widget')));
     items.add(Item('数据库', LiteScreen(title: '数据库')));
+    items.add(Item('设备信息', DeviceInfoScreen(title: '设备信息')));
     return items;
   }
 

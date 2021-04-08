@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_practice/storage/db/example/book.dart';
-import 'package:flutter_practice/storage/db/example/book_form.dart';
+import 'package:flutter_practice/example/db/book.dart';
+import 'package:flutter_practice/example/db/ui/book_form.dart';
 import 'package:flutter_practice/storage/db/lite_task.dart';
 
-import 'example_database_manager.dart';
+import '../example_database_manager.dart';
 
 /// LiteTask操作测试
 class LiteTaskScreen extends StatefulWidget {
