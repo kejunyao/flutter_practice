@@ -5,6 +5,8 @@ import 'package:flutter_practice/example/db/ui/lite_screen.dart';
 import 'package:flutter_practice/widgets/example/device_info_screen.dart';
 import 'package:flutter_practice/widgets/example/widget_list_screen.dart';
 
+import 'animation/example/animation_list_screen.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -35,6 +37,7 @@ class MyHomePage extends BaseGridView {
     items.add(Item('Widget', WidgetListScreen(title: 'Widget')));
     items.add(Item('数据库', LiteScreen(title: '数据库')));
     items.add(Item('设备信息', DeviceInfoScreen(title: '设备信息')));
+    items.add(Item('动画', AnimationListScreen(title: '动画')));
     return items;
   }
 
